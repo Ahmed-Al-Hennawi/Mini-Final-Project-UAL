@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart Logistics Planner — Ahmed AlHennawi</title>
+    <meta name="description"
+        content="A dispatch planner that sorts a package queue by urgency, then evolves a delivery route with a genetic algorithm. MSc mini-project, UAL.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+    <a class="skip" href="#main">Skip to content</a>
+
+    <nav class="bar">
+        <a class="wordmark" href="#top">
+            <span class="mark" aria-hidden="true"></span>
+            Smart&nbsp;Logistics&nbsp;Planner
+        </a>
+        <ul class="bar-nav">
+            <li><a href="#tradeoff">Trade-off</a></li>
+            <li><a href="#pipeline">Pipeline</a></li>
+            <li><a href="#algorithms">Algorithms</a></li>
+            <li><a href="#complexity">Complexity</a></li>
+        </ul>
+        <a class="bar-cta" href="app.html" target="_blank" rel="noopener">Open app</a>
+    </nav>
+
+    <main id="main">
+        <header class="hero" id="top">
+            <div class="hero-grid">
+                <div class="hero-text">
+                    <p class="kicker">Mini-project · Algorithms &amp; Data Structures</p>
+                    <h1>Two objectives,<br><span class="hl">one truck.</span></h1>
+                    <p class="lede">A van can leave with the medical box first, or it can leave on the shortest loop.
+                        It can't do both perfectly. This planner sorts the queue by urgency, then evolves a route
+                        around that order until the mileage stops improving.</p>
+                    <div class="hero-actions">
+                        <a class="btn" href="app.html" target="_blank" rel="noopener">Launch the simulator</a>
+                        <a class="btn ghost" href="#pipeline">See how it runs</a>
+                    </div>
+                </div>
+
+                <figure class="map" aria-label="Illustration of a delivery route through eight stops">
+                    <svg viewBox="0 0 420 380" role="img">
+                        <defs>
+                            <pattern id="grid" width="30" height="30" patternUnits="userSpaceOnUse">
+                                <path d="M30 0H0V30" fill="none" stroke="currentColor" stroke-width="1"
+                                    opacity=".14" />
+                            </pattern>
+                        </defs>
+                        <rect width="420" height="380" fill="url(#grid)" />
+                        <polyline class="route" fill="none" stroke-width="2.5" stroke-linecap="round"
+                            stroke-linejoin="round"
+                            points="86,300 150,246 122,150 208,96 300,132 348,224 268,286 190,332 86,300" />
+                        <g class="stops">
+                            <circle cx="86" cy="300" r="9" class="depot" />
+                            <circle cx="150" cy="246" r="5" />
+                            <circle cx="122" cy="150" r="5" class="urgent" />
+                            <circle cx="208" cy="96" r="5" />
+                            <circle cx="300" cy="132" r="5" class="urgent" />
+                            <circle cx="348" cy="224" r="5" />
+                            <circle cx="268" cy="286" r="5" />
+                            <circle cx="190" cy="332" r="5" />
+                        </g>
+                        <text x="70" y="330" class="lbl">DEPOT</text>
+                        <text x="106" y="138" class="lbl">P1</text>
+                        <text x="284" y="120" class="lbl">P1</text>
+                    </svg>
+                    <figcaption>Priority-1 stops pulled forward; the rest ordered by distance.</figcaption>
+                </figure>
+            </div>
+
+            <ul class="stats">
+                <li><b>O(n log n)</b><span>average sort cost</span></li>
+                <li><b>80</b><span>generations per route</span></li>
+                <li><b>NP-hard</b><span>the routing half (TSP)</span></li>
+                <li><b>Python</b><span>marimo notebook app</span></li>
+            </ul>
+        </header>
+
+        <section id="tradeoff" class="band">
+            <div class="head">
+                <span class="num">01</span>
+                <h2>The trade-off nobody writes down</h2>
+            </div>
+            <div class="split">
+                <p class="big">Dispatch software usually optimises one thing. Drivers live with two.</p>
+                <div class="prose">
+                    <p>Sort purely by urgency and the van zig-zags across the city, burning fuel and time to honour an
+                        order that a customer never sees. Sort purely by geography and the insulin sits in the back
+                        until stop eleven.</p>
+                    <p>The planner treats these as separate stages rather than one impossible score. Urgency decides
+                        <em>who is in today's batch and in what tier</em>. The route optimiser then decides
+                        <em>how to physically cover that batch</em>. Neither stage has to pretend the other doesn't
+                        exist.</p>
+                </div>
+            </div>
+        </section>
+
+        <section id="pipeline" class="band alt">
+            <div class="head">
+                <span class="num">02</span>
+                <h2>How a run happens</h2>
+            </div>
+            <ol class="steps">
+                <li>
+                    <span class="step-n">01</span>
+                    <h3>Intake</h3>
+                    <p>Packages arrive with coordinates and a priority flag. Nothing is assumed to be sorted — real
+                        queues arrive half-ordered, which is exactly where naive pivots fall over.</p>
+                </li>
+                <li>
+                    <span class="step-n">02</span>
+                    <h3>Sort</h3>
+                    <p>Quicksort orders the queue by urgency using a middle-element pivot, so a partially sorted input
+                        doesn't collapse the partition into O(n²).</p>
+                </li>
+                <li>
+                    <span class="step-n">03</span>
+                    <h3>Evolve</h3>
+                    <p>A population of candidate routes is scored by total distance. The best survive, swap segments,
+                        and mutate. After 80 generations the improvement curve has usually flattened.</p>
+                </li>
+                <li>
+                    <span class="step-n">04</span>
+                    <h3>Dispatch</h3>
+                    <p>The winning permutation is returned as a stop list with its distance, so it can be compared
+                        against the raw priority order.</p>
+                </li>
+            </ol>
+        </section>
+
+        <section id="algorithms" class="band">
+            <div class="head">
+                <span class="num">03</span>
+                <h2>The two algorithms, and why those two</h2>
+            </div>
+
+            <article class="algo">
+                <div class="algo-meta">
+                    <p class="tag">Sorting</p>
+                    <h3>Quicksort, middle pivot</h3>
+                    <p class="mono-note">in-place · unstable · Θ(n log n) average</p>
+                </div>
+                <div class="prose">
+                    <p>Urgency has few distinct values, so the interesting failure isn't speed on random data — it's
+                        what happens when yesterday's list comes back nearly sorted. Taking the first or last element
+                        as the pivot on that input produces maximally unbalanced partitions and quadratic behaviour.</p>
+                    <p>Picking the middle element costs nothing and removes the common case of that failure. Merge sort
+                        would guarantee the bound, but it needs O(n) extra space for a queue that is already in memory
+                        and doesn't need stability here.</p>
+                    <pre><code>pivot = arr[len(arr) // 2]
+left  = [x for x in arr if x.priority &lt; pivot.priority]
+mid   = [x for x in arr if x.priority == pivot.priority]
+right = [x for x in arr if x.priority &gt; pivot.priority]
+return quicksort(left) + mid + quicksort(right)</code></pre>
+                </div>
+            </article>
+
+            <article class="algo">
+                <div class="algo-meta">
+                    <p class="tag">Routing</p>
+                    <h3>Genetic algorithm over the TSP</h3>
+                    <p class="mono-note">heuristic · no optimality guarantee</p>
+                </div>
+                <div class="prose">
+                    <p>Visiting every stop once at minimum distance is the Travelling Salesman Problem. Exhaustive
+                        search is O(n!) — twelve stops is already 479 million orderings, and a depot is rarely
+                        that small.</p>
+                    <p>So the planner stops asking for the best route and asks for a good one, quickly. Each candidate
+                        is a permutation of stops; fitness is the inverse of total distance; strong routes are kept,
+                        recombined, and occasionally mutated by swapping two stops. It's a hill climb with enough
+                        randomness to avoid the first hill it finds.</p>
+                    <p class="callout">A genetic algorithm will not return the optimal tour, and it won't return the
+                        same tour twice. For dispatch planning, a route within a few percent of optimal in under a
+                        second beats an exact answer nobody waits for.</p>
+                </div>
+            </article>
+        </section>
+
+        <section id="complexity" class="band alt">
+            <div class="head">
+                <span class="num">04</span>
+                <h2>Complexity</h2>
+            </div>
+            <div class="table-wrap">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Operation</th>
+                            <th>Best</th>
+                            <th>Average</th>
+                            <th>Worst</th>
+                            <th>Space</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Quicksort by urgency</td>
+                            <td>Ω(n log n)</td>
+                            <td>Θ(n log n)</td>
+                            <td>O(n²)</td>
+                            <td>O(log n)</td>
+                        </tr>
+                        <tr>
+                            <td>Route distance evaluation</td>
+                            <td>Ω(n)</td>
+                            <td>Θ(n)</td>
+                            <td>O(n)</td>
+                            <td>O(1)</td>
+                        </tr>
+                        <tr>
+                            <td>Genetic algorithm (g generations, p population)</td>
+                            <td colspan="3">Θ(g · p · n) per run</td>
+                            <td>O(p · n)</td>
+                        </tr>
+                        <tr class="muted">
+                            <td>Exact TSP by brute force <em>(not used)</em></td>
+                            <td colspan="3">Θ(n!)</td>
+                            <td>O(n)</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <p class="foot-note">Runtime is bounded by the generation count rather than by the number of stops, which
+                is what makes the planner predictable to run — and what caps how good its answer can get.</p>
+        </section>
+
+        <section id="limits" class="band">
+            <div class="head">
+                <span class="num">05</span>
+                <h2>What it doesn't do yet</h2>
+            </div>
+            <ul class="limits">
+                <li><b>Distance is Euclidean.</b> Straight lines between coordinates, not road distance. Real streets,
+                    one-ways and traffic would change the ranking of routes.</li>
+                <li><b>One vehicle, unlimited capacity.</b> Splitting a batch across vans is a different problem
+                    (vehicle routing) and needs a different fitness function.</li>
+                <li><b>No time windows.</b> A delivery that must land between 09:00 and 11:00 is currently just another
+                    priority tier.</li>
+                <li><b>Fixed generation count.</b> Stopping at 80 rather than when improvement stalls wastes work on
+                    easy batches and cuts hard ones short.</li>
+            </ul>
+        </section>
+    </main>
+
+    <footer class="footer">
+        <div>
+            <p class="f-title">Smart Logistics Planner</p>
+            <p class="f-sub">Ahmed AlHennawi · MSc Computer Science, University of the Arts London</p>
+        </div>
+        <a class="btn small" href="app.html" target="_blank" rel="noopener">Launch the simulator</a>
+    </footer>
+
+    <script src="script.js"></script>
+</body>
+
+</html>
