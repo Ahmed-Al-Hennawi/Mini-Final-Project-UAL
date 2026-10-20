@@ -5,7 +5,7 @@ Ahmed AlHennawi · MSc Computer Science, University of the Arts London
 
 A dispatch planner that sorts a package queue by urgency, then evolves a delivery route around that order with a genetic algorithm. Built as an interactive [marimo](https://marimo.io) notebook.
 
-**[Live site](https://git.arts.ac.uk/pages/a-alhennawi0520251/Mini-Final-Project-Enhanced/)** · **[Repository](https://git.arts.ac.uk/a-alhennawi0520251/Mini-Final-Project-Enhanced)**
+**[Live site](https://git.arts.ac.uk/pages/a-alhennawi0520251/Mini-Final-Project-Enhanced/)** · **[Repository](https://github.com/Ahmed-Al-Hennawi/Mini-Final-Project-UAL)**
 
 ---
 
